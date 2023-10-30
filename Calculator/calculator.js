@@ -39,11 +39,11 @@ function calculate(input) {
         if (prefixOperator === 'sin') {
             indexOfOpeningParenthesis -= 1;
             deleteCount += 1
-            res = Math.sin(expression);
+            res = Math.sin(calculateExpression(expression));
         } else if (prefixOperator === 'cos') {
             indexOfOpeningParenthesis -= 1;
             deleteCount += 1
-            res = Math.cos(expression);
+            res = Math.cos(calculateExpression(expression));
         } else {
             res = calculateExpression(expression);
         }
@@ -68,11 +68,11 @@ function calculateExpression(args) {
 
     for (let i = 0; i < args.length; i++) {
         if (args[i] === '*') {
-            let product = args[i - 1] * args[i + 1];
+            let product = parseFloat(args[i - 1]) * parseFloat(args[i + 1]);
             args.splice(i - 1, 3, product.toString());
             calculateExpression(args);
         } else if (args[i] === '/') {
-            let division = args[i - 1] / args[i + 1];
+            let division = parseFloat(args[i - 1]) / parseFloat(args[i + 1]);
             args.splice(i - 1, 3, division.toString());
             calculateExpression(args)
         } else {
@@ -82,11 +82,11 @@ function calculateExpression(args) {
 
     for (let i = 0; i < args.length; i++) {
         if (args[i] === '+') {
-            let sum = parseInt(args[i - 1]) + parseInt(args[i + 1]);
+            let sum = parseFloat(args[i - 1]) + parseFloat(args[i + 1]);
             args.splice(i - 1, 3, sum.toString());
             calculateExpression(args);
         } else if (args[i] === '-') {
-            let subtraction = parseInt(args[i - 1]) - parseInt(args[i + 1]);
+            let subtraction = parseFloat(args[i - 1]) - parseFloat(args[i + 1]);
             args.splice(i - 1, 3, subtraction.toString());
             calculateExpression(args);
         } else {
@@ -97,20 +97,20 @@ function calculateExpression(args) {
 }
 
 Tests:
-console.log(calculate("(31)") == 31);              //31
-console.log(calculate("sin(30)") == -0.9880316240928618);           //-0.9880316240928618
-console.log(calculate("(cos(30))") == 0.15425144988758405);         //0.15425144988758405
-console.log(calculate("(((31 + 25)))") == 56);         //56
-console.log(calculate("31 - 25") == 6);           //6  
-console.log(calculate("31 *10") == 310);            //310 
-console.log(calculate("600 / 20") == 30 );          //30  
-console.log(calculate("5 * (3+4)") == 35);         //35 
-console.log(calculate("(3 * (15 - 1) + 4)") == 46); //46
-console.log(calculate("(3 * (5 - 1) / (1+1) + 4)") == 10);  //10 
-console.log(calculate("((3) * ((6-1) - 1) / (1+1) - 4)") == 2); //2 
-console.log(calculate("cos(sin(30))") == 0.5503344099628432); //0.5503344099628432  
-console.log(calculate("cos(((3) * ((6-1) - 1) / (1+1) - 4))") == -0.4161468365471424); //-0.4161468365471424 
-console.log(calculate("cos(30)*sin(30)") == -0.15240531055110834); //-0.15240531055110834  
-
+console.log(calculate("(31)") == parseFloat(31));              //31
+console.log(calculate("sin(30)") == parseFloat(-0.9880316240928618));           //-0.9880316240928618
+console.log(calculate("(cos(30))") == parseFloat(0.15425144988758405));         //0.15425144988758405
+console.log(calculate("(((31 + 25)))") == parseFloat(56));         //56
+console.log(calculate("31 - 25") == parseFloat(6));           //6  
+console.log(calculate("31 *10") == parseFloat("310"));            //310 
+console.log(calculate("600 / 20") == parseFloat(30) );          //30  
+console.log(calculate("5 * (3+4)") == parseFloat(35));         //35 
+console.log(calculate("(3 * (15 - 1) + 4)") == parseFloat(46)); //46
+console.log(calculate("(3 * (5 - 1) / (1+1) + 4)") == parseFloat(10));  //10 
+console.log(calculate("((3) * ((6-1) - 1) / (1+1) - 4)") == parseFloat(2)); //2 
+console.log(calculate("cos(sin(30))") == parseFloat(0.5503344099628432)); //0.5503344099628432  
+console.log(calculate("cos(((3) * ((6-1) - 1) / (1+1) - 4))") == parseFloat(-0.4161468365471424)); //-0.4161468365471424 
+console.log(calculate("cos(30)*sin(30)") == parseFloat(-0.15240531055110834)); //-0.15240531055110834  
+console.log(calculate("1+sin(2+3)") == parseFloat(0.041075725336861546)) //0.041075725336861546
 
 
