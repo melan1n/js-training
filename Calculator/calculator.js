@@ -4,26 +4,52 @@
 // Example input:
 // "5 * (3+4)"
 // "3.14 * sin(2.78+4*5)"
+// Allow for passing params. 
+//Example: console.log(calculate("a+5", { a: 5 })); // 10
 
-function calculate(input) {
+function calculate(input, params) {
     input = input.replace(/\s/g, '');
     let args = [];
     let num = [];
+    let parameter = [];
     for (let i = 0; i < input.length; i++) {
         let curr = input[i];
         if (['+', '-', '*', '/', '(', ')'].includes(curr)) {
-            pushCharsToNumArray();
+            pushNumToArray();
+            pushParameterToArray();
             args.push(curr);
-        } else if (curr === 's' || curr == 'c') {
-            let func = [input[i], input[++i], input[++i]]
-            pushCharsToNumArray();
-            args.push(func.join(''));
+        } else if (curr === 's') {
+            let currI = i;
+            if (input[++currI] === 'i' && input[++currI] === 'n') {
+                let func = [input[i], input[++i], input[++i]]
+                pushNumToArray();
+                pushParameterToArray();
+                args.push(func.join(''));
+            } else {
+                parameter.push(curr);
+            }
+        } else if (curr == 'c') {
+            let currI = i;
+            if (input[++currI] === 'o' && input[++currI] === 's') {
+                let func = [input[i], input[++i], input[++i]]
+                pushNumToArray();
+                pushParameterToArray();
+                args.push(func.join(''));
+            } else {
+                parameter.push(curr);
+            }
         } else {
-            num.push(curr);
+            if (['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(curr)) {
+                parameter.push(curr);
+                num.push(curr);
+            } else {
+                parameter.push(curr);
+            }
         }
     }
 
-    pushCharsToNumArray();
+    pushNumToArray();
+    pushParameterToArray();
 
     let indexOfFirstClosingParenthesis = args.indexOf(')');
     while (indexOfFirstClosingParenthesis > -1) {
@@ -54,10 +80,22 @@ function calculate(input) {
 
     return calculateExpression(args);
 
-    function pushCharsToNumArray() {
-        if (num.length > 0) {
+    function pushNumToArray() {
+        if (num.length > 0 && num.length >= parameter.length) {
             args.push(num.join(''));
             num = [];
+            parameter = [];
+        }
+    }
+
+    function pushParameterToArray() {
+        if (parameter.length > 0) {
+            let p = parameter.join('');
+            if (params != undefined && params != null && params.hasOwnProperty(p)) {
+                args.push(params[p].toString());
+            }
+            num = [];
+            parameter = [];
         }
     }
 }
@@ -112,5 +150,15 @@ console.log(calculate("cos(sin(30))") == parseFloat(0.5503344099628432)); //0.55
 console.log(calculate("cos(((3) * ((6-1) - 1) / (1+1) - 4))") == parseFloat(-0.4161468365471424)); //-0.4161468365471424 
 console.log(calculate("cos(30)*sin(30)") == parseFloat(-0.15240531055110834)); //-0.15240531055110834  
 console.log(calculate("1+sin(2+3)") == parseFloat(0.041075725336861546)) //0.041075725336861546
+console.log(calculate("s + 5", { s: 5 }) == parseFloat(10)); // 10
+console.log(calculate("ab + 5", { ab: 5 }) == parseFloat(10)); // 10
+console.log(calculate("5 + a2b", { a2b: 5 }) == parseFloat(10)); // 10
+console.log(calculate("5 + 2ab", { "2ab": 5 }) == parseFloat(10)); // 10
+console.log(calculate("s + ab2", { "ab2": 5, s: 5 }) == parseFloat(10)); // 10
+console.log(calculate("sin(s + ab2)", { "ab2": 5, s: 5 }) == parseFloat(-0.5440211108893698)); // -0.5440211108893698
+console.log(calculate("cos(s*ab2)", { "ab2": 5, s: 2 }) == parseFloat(-0.8390715290764524)); // -0.8390715290764524
+
+
+
 
 
