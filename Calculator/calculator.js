@@ -1,11 +1,12 @@
 // Implement "calculator" in javascript. Do not use the javascript "eval" function.
 // Input: A mathematical expression using "+", "-", "*", "/", "sin", "cos" and brackets.
+// Allow for passing params. Allow for passing functions
 // Output: The result of the expression.
 // Example input:
 // "5 * (3+4)"
 // "3.14 * sin(2.78+4*5)"
-// Allow for passing params. 
-//Example: console.log(calculate("a+5", { a: 5 })); // 10
+// "a+5", { a: 5 } // 10
+// "a+f(10)+5", { a: 5, f: (x) => x * x } //110
 
 function calculate(input, params) {
     input = input.replace(/\s/g, '');
@@ -70,8 +71,13 @@ function calculate(input, params) {
             indexOfOpeningParenthesis -= 1;
             deleteCount += 1
             res = Math.cos(calculateExpression(expression));
-        } else {
-            res = calculateExpression(expression);
+        } else { //function to evaluate
+            if (!(['+', '-', '*', '/', '(', undefined].includes(prefixOperator))) {
+                indexOfOpeningParenthesis --;
+                deleteCount ++;
+            }
+            
+            res = calculateExpression(expression, prefixOperator);
         }
         args.splice(indexOfOpeningParenthesis, deleteCount);
         args.splice(indexOfOpeningParenthesis, 0, res.toString());
@@ -91,48 +97,72 @@ function calculate(input, params) {
     function pushParameterToArray() {
         if (parameter.length > 0) {
             let p = parameter.join('');
-            if (params != undefined && params != null && params.hasOwnProperty(p)) {
-                args.push(params[p].toString());
+            if (params != undefined &&
+                params != null &&
+                params.hasOwnProperty(p) &&
+                isNumeric(params[p.toString()])) {
+                args.push(params[p.toString()].toString());
+            } else {
+                args.push(p.toString());
             }
             num = [];
             parameter = [];
         }
     }
+
+    function calculateExpression(args, prefixOperator) {
+        if (['+', '-', '*', '/', '(', ')', undefined].includes(prefixOperator)) {
+            if (args.length === 0) return;
+        if (args.length === 1) return args[0];
+    
+        for (let i = 0; i < args.length; i++) {
+            if (args[i] === '*') {
+                let product = parseFloat(args[i - 1]) * parseFloat(args[i + 1]);
+                args.splice(i - 1, 3, product.toString());
+                calculateExpression(args);
+            } else if (args[i] === '/') {
+                let division = parseFloat(args[i - 1]) / parseFloat(args[i + 1]);
+                args.splice(i - 1, 3, division.toString());
+                calculateExpression(args)
+            } else {
+                continue;
+            }
+        }
+    
+        for (let i = 0; i < args.length; i++) {
+            if (args[i] === '+') {
+                let sum = parseFloat(args[i - 1]) + parseFloat(args[i + 1]);
+                args.splice(i - 1, 3, sum.toString());
+                calculateExpression(args);
+            } else if (args[i] === '-') {
+                let subtraction = parseFloat(args[i - 1]) - parseFloat(args[i + 1]);
+                args.splice(i - 1, 3, subtraction.toString());
+                calculateExpression(args);
+            } else {
+                continue;
+            }
+        }
+        return args[0];                
+        } else {
+            let func = params[prefixOperator];
+            //['b,c']
+            if (!isNumeric(args[0])) {
+                args = args[0].split(',');
+                args = args.map(x => params.hasOwnProperty(x) ? x=params[x.toString()] : x=x);
+            }
+            return func(...args);       
+        }
+        
+    }
 }
 
-function calculateExpression(args) {
-    if (args.length === 0) return;
-    if (args.length === 1) return args[0];
-
-    for (let i = 0; i < args.length; i++) {
-        if (args[i] === '*') {
-            let product = parseFloat(args[i - 1]) * parseFloat(args[i + 1]);
-            args.splice(i - 1, 3, product.toString());
-            calculateExpression(args);
-        } else if (args[i] === '/') {
-            let division = parseFloat(args[i - 1]) / parseFloat(args[i + 1]);
-            args.splice(i - 1, 3, division.toString());
-            calculateExpression(args)
-        } else {
-            continue;
-        }
-    }
-
-    for (let i = 0; i < args.length; i++) {
-        if (args[i] === '+') {
-            let sum = parseFloat(args[i - 1]) + parseFloat(args[i + 1]);
-            args.splice(i - 1, 3, sum.toString());
-            calculateExpression(args);
-        } else if (args[i] === '-') {
-            let subtraction = parseFloat(args[i - 1]) - parseFloat(args[i + 1]);
-            args.splice(i - 1, 3, subtraction.toString());
-            calculateExpression(args);
-        } else {
-            continue;
-        }
-    }
-    return args[0];
+function isNumeric(obj) {
+    if (typeof obj.toString() != "string") return false // we only process strings!  
+    return !isNaN(obj.toString()) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
+        !isNaN(parseFloat(obj.toString())) // ...and ensure strings of whitespace fail
 }
+
+
 
 Tests:
 console.log(calculate("(31)") == parseFloat(31));              //31
@@ -157,6 +187,9 @@ console.log(calculate("5 + 2ab", { "2ab": 5 }) == parseFloat(10)); // 10
 console.log(calculate("s + ab2", { "ab2": 5, s: 5 }) == parseFloat(10)); // 10
 console.log(calculate("sin(s + ab2)", { "ab2": 5, s: 5 }) == parseFloat(-0.5440211108893698)); // -0.5440211108893698
 console.log(calculate("cos(s*ab2)", { "ab2": 5, s: 2 }) == parseFloat(-0.8390715290764524)); // -0.8390715290764524
+console.log(calculate("a+f(10)+5", { a: 5, f: (x) => x * x }) == parseFloat(110)); // 5+100+5 = 110
+console.log(calculate("a+func((b+c))+5", { a: 5, func: (x) => x * x, b: 3, c: 7 }) == parseFloat(110)); // 5+100+5 = 110
+console.log(calculate("a+func(b, c)+5", { a: 5, func: (x, y) => x + y, b: 3, c: 7 }) == parseFloat(20)); // 5+10+5 = 20
 
 
 
