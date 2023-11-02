@@ -42,20 +42,34 @@ async function calculate(input, params) {
                 
             }
             args.splice(indexOfOpeningParenthesis, deleteCount);
-            args.splice(indexOfOpeningParenthesis, 0, res);
+            args.splice(indexOfOpeningParenthesis, 0, await res);
             indexOfFirstClosingParenthesis = args.indexOf(')');
         }
 
         let allPromise = Promise.all(args);
-        return await allPromise.then(values => (calculateExpression(values)));
+        
+        //old, but should not mix async/await with promise.then()
+        //return await allPromise.then(values => (calculateExpression(values)));
+        
+        //new
+        let result = await allPromise
+        return calculateExpression(result);
+
         args = [2]
-        //return calculateExpression(args);
     }
 
     function calculateExpression(args, prefixOperator) {
         if (['+', '-', '*', '/', '(', ')', undefined].includes(prefixOperator)) {
             if (args.length === 0) return;
-            if (args.length === 1) return args[0];
+            if (args.length === 1) {
+                if (Array.isArray(args[0])) {
+                    //return args[0][0];
+                    return calculateExpression(args[0]);
+                } else {
+                    return args[0];
+                }
+            }
+
 
             for (let i = 0; i < args.length; i++) {
                 if (args[i] === '*') {
@@ -175,19 +189,19 @@ function isNumeric(obj) {
 }
 
 //Tests:
-//calculate("(31)").then(console.log);              //31
+calculate("(31)").then(console.log);              //31 
 calculate("sin(30)").then(console.log);           //-0.9880316240928618
-//calculate("(cos(30))").then(console.log);         //0.15425144988758405
-//calculate("(((31 + 25)))").then(console.log);         //56
+calculate("(cos(30))").then(console.log);         //0.15425144988758405
+calculate("(((31 + 25)))").then(console.log);         //   56
 calculate("31 - 25").then(console.log);           //6  
 calculate("31 *10").then(console.log);            //310 
 calculate("600 / 20").then(console.log);          //30  
 calculate("5 * (3+4)").then(console.log);         //35 
-//calculate("(3 * (15 - 1) + 4)").then(console.log); //46
-//calculate("(3 * (5 - 1) / (1+1) + 4)").then(console.log);  //10 
-//calculate("((3) * ((6-1) - 1) / (1+1) - 4)").then(console.log); //2 
+calculate("(3 * (15 - 1) + 4)").then(console.log); //46
+calculate("(3 * (5 - 1) / (1+1) + 4)").then(console.log);  //10 
+calculate("((3) * ((6-1) - 1) / (1+1) - 4)").then(console.log); //2 
 calculate("cos(sin(30))").then(console.log); //0.5503344099628432  
-//calculate("cos(((3) * ((6-1) - 1) / (1+1) - 4))").then(console.log); //-0.4161468365471424 
+calculate("cos(((3) * ((6-1) - 1) / (1+1) - 4))").then(console.log); //-0.4161468365471424 
 calculate("cos(30)*sin(30)").then(console.log); //-0.15240531055110834  
 calculate("1+sin(2+3)").then(console.log) //0.041075725336861546
 calculate("s + 5", { s: 5 }).then(console.log); // 10
@@ -198,10 +212,41 @@ calculate("s + ab2", { "ab2": 5, s: 5 }).then(console.log); // 10
 calculate("sin(s + ab2)", { "ab2": 5, s: 5 }).then(console.log); // -0.5440211108893698
 calculate("cos(s*ab2)", { "ab2": 5, s: 2 }).then(console.log); // -0.8390715290764524
 calculate("a+f(10)+5", { a: 5, f: (x) => x * x }).then(console.log); // 5+100+5 = 110
-//calculate("a+func((b+c))+5", { a: 5, func: (x) => x * x, b: 3, c: 7 }).then(console.log); // 5+100+5 = 110
+calculate("a+func((b+c))+5", { a: 5, func: (x) => x * x, b: 3, c: 7 }).then(console.log); //5+100+5 = 110
 calculate("a+func(b, c)+5", { a: 5, func: (x, y) => x + y, b: 3, c: 7 }).then(console.log); // 5+10+5 = 20
 calculate("a+f(10)+5", { a: 5, f: async (x) => x*x }).then(console.log); // 5+100+5 = 110
 
+// assert(calculate("(31)", {}), 31).then(() => {
+//     console.log('done');
+// }).catch(err => {
+//     console.log(err);
+// });
 
+// assert(calculate("5+6", {}), calculate("5+f(6)", { f: async (x) => x })).then(() => {
+//     console.log('done');
+// }).catch(err => {
+//     console.log(err);
+// });
+
+async function opa() {
+    let result = await calculate("a+f(10)+5", { a: 5, f: async (x) => x*x });
+    return result;
+}
+ 
+async function assert(a, b) {
+    const aresult = await Promise.resolve(a);
+    const bresult = await Promise.resolve(b);
+ 
+    if (aresult != aresult) {
+        throw new Error(`${aresult} === ${bresult}`);
+    }
+}
+ 
+ 
+
+ 
+// opa().then((result) => {
+//     console.log(result);
+// })
 
 
