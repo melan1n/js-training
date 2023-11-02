@@ -6,57 +6,56 @@
 // "3.14 * sin(2.78+4*5)"
 // Allow for passing params. 
 //Example: console.log(calculate("a+5", { a: 5 })); // 10
+//transform calculate() function to be async:
+//   - use promise
 
 async function calculate(input, params) {
     let args = tokenize(input, params);
-    while (args.length > 1) {
-        let indexOfFirstClosingParenthesis = args.indexOf(')');
-        while (indexOfFirstClosingParenthesis > -1) {
-            let argsToFirstClosingParenhesis = [];
-            for (i = 0; i < indexOfFirstClosingParenthesis; i++) {
-                argsToFirstClosingParenhesis[i] = args[i];
-            }
-            let indexOfOpeningParenthesis = argsToFirstClosingParenhesis.lastIndexOf('(');
-            let deleteCount = indexOfFirstClosingParenthesis + 1 - indexOfOpeningParenthesis;
-            let expression = argsToFirstClosingParenhesis.slice(indexOfOpeningParenthesis + 1, argsToFirstClosingParenhesis.length);
-            let prefixOperator = argsToFirstClosingParenhesis.slice(indexOfOpeningParenthesis - 1, indexOfOpeningParenthesis)[0];
-            if (!(['+', '-', '*', '/', '(', undefined].includes(prefixOperator))) {
-                indexOfOpeningParenthesis--;
-                deleteCount++;
-            }
-            let res = '';
-            if (prefixOperator === 'sin') {
-                res = Math.sin(calculateExpression(expression));
-            } else if (prefixOperator === 'cos') {
-                res = Math.cos(calculateExpression(expression));
-            } else { //function to evaluate
-                if(prefixOperator === undefined) {
-                    res = new Promise((resolve, reject) => {
-                        resolve(expression)
-                    });
-                } else {
-                    res = new Promise((resolve, reject) => {
-                        resolve(calculateExpression(expression, prefixOperator))
-                    });
-                }
-                
-            }
-            args.splice(indexOfOpeningParenthesis, deleteCount);
-            args.splice(indexOfOpeningParenthesis, 0, await res);
-            indexOfFirstClosingParenthesis = args.indexOf(')');
+
+    let indexOfFirstClosingParenthesis = args.indexOf(')');
+    while (indexOfFirstClosingParenthesis > -1) {
+        let argsToFirstClosingParenhesis = [];
+        for (i = 0; i < indexOfFirstClosingParenthesis; i++) {
+            argsToFirstClosingParenhesis[i] = args[i];
         }
+        let indexOfOpeningParenthesis = argsToFirstClosingParenhesis.lastIndexOf('(');
+        let deleteCount = indexOfFirstClosingParenthesis + 1 - indexOfOpeningParenthesis;
+        let expression = argsToFirstClosingParenhesis.slice(indexOfOpeningParenthesis + 1, argsToFirstClosingParenhesis.length);
+        let prefixOperator = argsToFirstClosingParenhesis.slice(indexOfOpeningParenthesis - 1, indexOfOpeningParenthesis)[0];
+        if (!(['+', '-', '*', '/', '(', undefined].includes(prefixOperator))) {
+            indexOfOpeningParenthesis--;
+            deleteCount++;
+        }
+        let res = '';
+        if (prefixOperator === 'sin') {
+            res = Math.sin(calculateExpression(expression));
+        } else if (prefixOperator === 'cos') {
+            res = Math.cos(calculateExpression(expression));
+        } else { //function to evaluate
+            if (prefixOperator === undefined) {
+                res = new Promise((resolve, reject) => {
+                    resolve(expression)
+                });
+            } else {
+                res = new Promise((resolve, reject) => {
+                    resolve(calculateExpression(expression, prefixOperator))
+                });
+            }
 
-        let allPromise = Promise.all(args);
-        
-        //old, but should not mix async/await with promise.then()
-        //return await allPromise.then(values => (calculateExpression(values)));
-        
-        //new
-        let result = await allPromise
-        return calculateExpression(result);
-
-        args = [2]
+        }
+        args.splice(indexOfOpeningParenthesis, deleteCount);
+        args.splice(indexOfOpeningParenthesis, 0, await res);
+        indexOfFirstClosingParenthesis = args.indexOf(')');
     }
+
+    let allPromise = Promise.all(args);
+
+    //works but should not mix async/await with promise.then()
+    //return await allPromise.then(values => (calculateExpression(values)));
+
+    //new
+    let result = await allPromise
+    return calculateExpression(result);
 
     function calculateExpression(args, prefixOperator) {
         if (['+', '-', '*', '/', '(', ')', undefined].includes(prefixOperator)) {
@@ -214,7 +213,7 @@ calculate("cos(s*ab2)", { "ab2": 5, s: 2 }).then(console.log); // -0.83907152907
 calculate("a+f(10)+5", { a: 5, f: (x) => x * x }).then(console.log); // 5+100+5 = 110
 calculate("a+func((b+c))+5", { a: 5, func: (x) => x * x, b: 3, c: 7 }).then(console.log); //5+100+5 = 110
 calculate("a+func(b, c)+5", { a: 5, func: (x, y) => x + y, b: 3, c: 7 }).then(console.log); // 5+10+5 = 20
-calculate("a+f(10)+5", { a: 5, f: async (x) => x*x }).then(console.log); // 5+100+5 = 110
+calculate("a+f(10)+5", { a: 5, f: async (x) => x * x }).then(console.log); // 5+100+5 = 110
 
 // assert(calculate("(31)", {}), 31).then(() => {
 //     console.log('done');
@@ -229,22 +228,22 @@ calculate("a+f(10)+5", { a: 5, f: async (x) => x*x }).then(console.log); // 5+10
 // });
 
 async function opa() {
-    let result = await calculate("a+f(10)+5", { a: 5, f: async (x) => x*x });
+    let result = await calculate("a+f(10)+5", { a: 5, f: async (x) => x * x });
     return result;
 }
- 
+
 async function assert(a, b) {
     const aresult = await Promise.resolve(a);
     const bresult = await Promise.resolve(b);
- 
+
     if (aresult != aresult) {
         throw new Error(`${aresult} === ${bresult}`);
     }
 }
- 
- 
 
- 
+
+
+
 // opa().then((result) => {
 //     console.log(result);
 // })
